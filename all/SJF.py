@@ -91,13 +91,7 @@ if options.solve == True:
     if options.policy == 'FIFO':
         thetime = 0
         print 'Execution trace:'
-        t = 0
-        for tmp in joblist:
-            jobnum  = tmp[0]
-            runtime = tmp[1]
-            turnaround = t + runtime
-            print '  [ time %3d ] Run job %3d for %3.2f secs ( DONE at %3.2f)' % (t, jobnum, runtime, turnaround)
-            t += runtime
+		#YOUR CODE
          
         print '\nFinal statistics:'
         t     = 0.0
