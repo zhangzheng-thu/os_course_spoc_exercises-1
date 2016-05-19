@@ -1,43 +1,32 @@
-# IO设备(lec 23) spoc 思考题
-
-## 个人思考题
-### IO特点 
- 1. 字符设备的特点是什么？
- 1. 块设备的特点是什么？
- 1. 网络设备的特点是什么？
- 1. 阻塞I/O、非阻塞I/O和异步I/O这三种I/O方式有什么区别？
-
-### I/O结构
- 1. 请描述I/O请求到完成的整个执行过程
- 1. CPU与设备通信的手段有哪些？
-
-> 显式的IO指令，如x86的in, out； 或者是memory读写方式，即把device的寄存器，内存等映射到物理内存中 
-
-### IO数据传输
- 1. IO数据传输有哪几种？
- 1. 轮询方式的特点是什么？
- 1. 中断方式的特点是什么？
- 1. DMA方式的特点是什么？
-
-### 磁盘调度
- 1. 请简要阐述磁盘的工作过程
- 1. 请用一表达式（包括寻道时间，旋转延迟，传输时间）描述磁盘I/O传输时间
- 1. 请说明磁盘调度算法的评价指标
- 1. FIFO磁盘调度算法的特点是什么?
- 1. 最短寻道时间优先(SSTF)磁盘调度算法的特点是什么?
- 1. 扫描(SCAN)磁盘调度算法的特点是什么?
- 1. 循环扫描(C-SCAN)磁盘调度算法的特点是什么?
- 1. C-LOOK磁盘调度算法的特点是什么?
- 1. N步扫描(N-step-SCAN)磁盘调度算法的特点是什么?
- 1. 双队列扫描(FSCAN)磁盘调度算法的特点是什么?
-
-### 磁盘缓存
- 1. 磁盘缓存的作用是什么？
- 1. 请描述单缓存(Single Buffer Cache)的工作原理
- 1. 请描述双缓存(Double Buffer Cache)的工作原理
- 1. 请描述访问频率置换算法(Frequency-based Replacement)的基本原理
-
-## 小组思考题
- - (spoc)完成磁盘访问与磁盘寻道算法的作业，具体帮助和要求信息请看[disksim指导信息](https://github.com/chyyuu/ucore_lab/blob/master/related_info/lab8/disksim-homework.md)和[disksim参考代码](https://github.com/chyyuu/ucore_lab/blob/master/related_info/lab8/disksim-homework.py)
+###小组思考题(1-键盘输入)：描述ucore操作系统中“键盘输入”从请求到完成的整个执行过程，并分析I/O过程的时间开销。
+用户在按下键盘之后，会出发KBD中断，然后调用`trap.c`中的trap_dispatch函数处理中断，中断号为IRQ_KBD:
+```
+    case IRQ_OFFSET + IRQ_KBD:
+        c = cons_getc();
+        {
+          extern void dev_stdin_write(char c);
+          dev_stdin_write(c);
+        }
+        break;
+```
+上述代码先通过cons_getc()从控制台获取输入字符串，然后将输入的字符存储在一个stdin_buffer的字符数组里。之后判断等待队列是否为空，非空则唤醒队列。
+```
+	bool intr_flag;
+    if (c != '\0') {
+        local_intr_save(intr_flag);
+        {
+            stdin_buffer[p_wpos % STDIN_BUFSIZE] = c;
+            if (p_wpos - p_rpos < STDIN_BUFSIZE) {
+                p_wpos ++;
+            }
+            if (!wait_queue_empty(wait_queue)) {
+                wakeup_queue(wait_queue, WT_KBD, 1);
+            }
+        }
+        local_intr_restore(intr_flag);
+    }
+ ```
+ 时间开销主要花费在进程的切换和检查等待队列上。
+ 
 
 
